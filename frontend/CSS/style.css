@@ -205,7 +205,14 @@ footer ul li a:hover { color:var(--terra); }
 .match-emoji { font-size:2.5rem; }
 .match-info h4 { font-weight:700; font-size:1rem; margin-bottom:2px; }
 .match-info p { font-size:.82rem; color:#7a5c42; }
-.match-pct-badge { margin-left:auto; background:var(--rust); color:var(--white); padding:6px 12px; border-radius:50px; font-size:.85rem; font-weight:700; }
+.match-pct-badge { margin-left:auto; background:var(--rust); color:var(--white); padding:6px 12px; border-radius:50px; font-size:.85rem; font-weight:700; min-width:52px; text-align:center; }
+.match-pct-badge.high { background:var(--sage); }
+.match-pct-badge.medium { background:var(--gold); color:var(--deep); }
+.match-pct-badge.low { background:var(--rust); }
+.match-details-breakdown { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.match-detail-tag { font-size:.68rem; padding:2px 8px; border-radius:50px; display:inline-block; }
+.match-detail-tag.ok { background:rgba(122,158,126,.15); color:var(--sage); }
+.match-detail-tag.warn { background:rgba(214,69,39,.1); color:var(--danger); }
 
 /* TOAST */
 .toast { position:fixed; bottom:32px; right:32px; background:var(--deep); color:var(--cream); padding:14px 24px; border-radius:12px; font-size:.9rem; z-index:300; transform:translateY(80px); opacity:0; transition:.3s; border-left:4px solid var(--terra); }

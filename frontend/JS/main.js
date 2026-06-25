@@ -309,6 +309,7 @@ async function enviarCadastroVoluntario() {
 // ══════════════════════════════════════════════════════════════
 //  QUIZ DE COMPATIBILIDADE (integrado com /api/v1/match)
 // ══════════════════════════════════════════════════════════════
+const TOTAL_QUIZ_STEPS = 7;
 let respostasQuiz = {};
 
 function openQuiz() {
@@ -324,24 +325,24 @@ function closeQuiz() {
 
 function resetQuiz() {
   respostasQuiz = {};
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= TOTAL_QUIZ_STEPS; i++) {
     const s = document.getElementById('quizStep' + i);
     if (s) s.style.display = 'none';
   }
   const r = document.getElementById('quizResults');
   if (r) r.style.display = 'none';
   document.getElementById('quizStep1').style.display = 'block';
-  document.getElementById('quizBar').style.width = '14%';
+  document.getElementById('quizBar').style.width = `${Math.round((1 / (TOTAL_QUIZ_STEPS + 1)) * 100)}%`;
 }
 
 function nextStep(step) {
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= TOTAL_QUIZ_STEPS; i++) {
     const s = document.getElementById('quizStep' + i);
     if (s) s.style.display = 'none';
   }
   const el = document.getElementById('quizStep' + step);
   if (el) el.style.display = 'block';
-  document.getElementById('quizBar').style.width = (step / 7 * 100) + '%';
+  document.getElementById('quizBar').style.width = `${Math.round((step / (TOTAL_QUIZ_STEPS + 1)) * 100)}%`;
 }
 
 function selectChoice(el) {
@@ -354,23 +355,17 @@ function selectChoice(el) {
   if (group && val !== undefined) respostasQuiz[group] = val;
 }
 
-// Mapeamento das perguntas/passos para os campos da API
-const QUIZ_STEP_MAPS = {
-  1: { group: 'tipo_moradia',         defaultVal: 'casa_com_quintal' },
-  2: { group: 'possui_criancas',      defaultVal: '0'                },
-  3: { group: 'preferencia_energia',  defaultVal: 'qualquer'         },
-  4: { group: 'tempo_livre_diario_h', defaultVal: '4'                },
-  5: { group: 'experiencia_previa',   defaultVal: 'intermediario'    },
-};
-
 function captureStepAnswer(step) {
-  const map = QUIZ_STEP_MAPS[step];
-  if (!map) return;
-  const selected = document.querySelector(`#quizStep${step} .quiz-choice.selected`);
+  const stepEl = document.getElementById(`quizStep${step}`);
+  if (!stepEl) return;
+
+  const selected = stepEl.querySelector('.quiz-choice.selected');
   if (selected) {
-    respostasQuiz[map.group] = selected.dataset.val || selected.textContent.trim();
-  } else if (!respostasQuiz[map.group]) {
-    respostasQuiz[map.group] = map.defaultVal;
+    const group = selected.dataset.group;
+    const val = selected.dataset.val;
+    if (group && val !== undefined) {
+      respostasQuiz[group] = val;
+    }
   }
 }
 
@@ -380,12 +375,13 @@ function goNextStep(current, next) {
 }
 
 async function showResults() {
-  captureStepAnswer(5);
+  // Capturar respostas dos dois últimos steps (6 e 7)
+  captureStepAnswer(TOTAL_QUIZ_STEPS);
 
   const resultsDiv = document.getElementById('quizResults');
   const listDiv    = document.getElementById('match-list');
 
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= TOTAL_QUIZ_STEPS; i++) {
     const s = document.getElementById('quizStep' + i);
     if (s) s.style.display = 'none';
   }
@@ -397,15 +393,17 @@ async function showResults() {
   try {
     // Montar payload para a API de match
     const payload = {
-      tipo_moradia:         respostasQuiz.tipo_moradia         || 'casa_com_quintal',
-      experiencia_previa:   respostasQuiz.experiencia_previa   || 'intermediario',
-      preferencia_especie:  respostasQuiz.preferencia_especie  || 'qualquer',
-      preferencia_porte:    respostasQuiz.preferencia_porte    || 'qualquer',
-      preferencia_energia:  respostasQuiz.preferencia_energia  || 'qualquer',
-      possui_criancas:      parseInt(respostasQuiz.possui_criancas   || '0'),
-      possui_outros_animais:parseInt(respostasQuiz.possui_outros_animais || '0'),
-      tempo_livre_diario_h: parseInt(respostasQuiz.tempo_livre_diario_h  || '4'),
+      tipo_moradia:          respostasQuiz.tipo_moradia          || 'casa_com_quintal',
+      experiencia_previa:    respostasQuiz.experiencia_previa    || 'intermediario',
+      preferencia_especie:   respostasQuiz.preferencia_especie   || 'qualquer',
+      preferencia_porte:     respostasQuiz.preferencia_porte     || 'qualquer',
+      preferencia_energia:   respostasQuiz.preferencia_energia   || 'moderado',
+      possui_criancas:       parseInt(respostasQuiz.possui_criancas    || '0'),
+      possui_outros_animais: parseInt(respostasQuiz.possui_outros_animais || '0'),
+      tempo_livre_diario_h:  parseInt(respostasQuiz.tempo_livre_diario_h  || '4'),
     };
+
+    console.log('📋 Quiz payload enviado:', payload);
 
     const token    = localStorage.getItem('token');
     const headers  = { 'Content-Type': 'application/json' };
@@ -418,34 +416,58 @@ async function showResults() {
     });
 
     const data = await response.json();
-    const matches = data.matches || data.resultados || [];
+    console.log('📊 Resposta do match:', data);
+
+    const matches = data.matches || [];
 
     if (!matches.length) {
-      listDiv.innerHTML = '<div class="empty-state">Nenhum match encontrado no momento. Tente outros critérios.</div>';
+      listDiv.innerHTML = `
+        <div class="empty-state">
+          ${data.mensagem || 'Nenhum match encontrado no momento.'}
+          ${data.sugestao ? `<br><small style="color:#999">${data.sugestao}</small>` : ''}
+          <br><small style="color:#999;margin-top:8px;display:block">Tente ajustar suas preferências (ex: selecionar "qualquer" na espécie ou porte).</small>
+        </div>`;
       return;
     }
 
+    // A API retorna: { score: Number(0-100), animal: {...}, detalhes: {...} }
     listDiv.innerHTML = matches.slice(0, 5).map(m => {
-      const pct   = Math.round((m.compatibilidade || m.score || 0) * 100);
-      const emoji = EMOJI_MAP[m.especie] || EMOJI_MAP.default;
+      const animal = m.animal;
+      const pct    = Math.round(m.score);  // Score já é 0-100
+      const emoji  = EMOJI_MAP[animal.especie] || EMOJI_MAP.default;
+      const nome   = animal.nome || 'Animal';
+
+      // Montar detalhes de compatibilidade
+      const detalhes = m.detalhes || {};
+      const detalhesHtml = Object.entries(detalhes).map(([key, info]) => {
+        const label = {
+          especie: 'Espécie', porte: 'Porte', energia: 'Energia',
+          criancas: 'Crianças', experiencia: 'Experiência', outros_animais: 'Outros pets'
+        }[key] || key;
+        const icon = info.ok ? '✅' : '⚠️';
+        return `<span class="match-detail-tag ${info.ok ? 'ok' : 'warn'}" title="${info.motivo || 'Compatível'}">${icon} ${label}: ${info.pontos}pts</span>`;
+      }).join('');
+
       return `
         <div class="match-result-card"
-             onclick="showToast('📅 Entrevista com ${m.nome} agendada! Aguarde confirmação por e-mail.')">
+             onclick="showToast('📅 Entrevista com ${nome} agendada! Aguarde confirmação por e-mail.')">
           <div class="match-emoji">${emoji}</div>
           <div class="match-info">
-            <h4>${m.nome}</h4>
-            <p>${m.especie || ''} · ${m.porte || ''} · ${m.nivel_energia || ''}</p>
+            <h4>${nome}</h4>
+            <p>${animal.especie || ''} · ${animal.porte || ''} · ${animal.nivel_energia || ''}</p>
+            <div class="match-details-breakdown">${detalhesHtml}</div>
           </div>
-          <div class="match-pct-badge">${pct}%</div>
+          <div class="match-pct-badge ${pct >= 70 ? 'high' : pct >= 50 ? 'medium' : 'low'}">${pct}%</div>
         </div>
       `;
     }).join('');
 
     // Atualizar barras de match no catálogo principal
     matches.forEach(m => {
-      const pct = Math.round((m.compatibilidade || m.score || 0) * 100);
-      const bar = document.getElementById(`match-bar-${m.id}`);
-      const pctEl = document.getElementById(`match-pct-${m.id}`);
+      const animal = m.animal;
+      const pct = Math.round(m.score);  // Score já é 0-100
+      const bar = document.getElementById(`match-bar-${animal.id}`);
+      const pctEl = document.getElementById(`match-pct-${animal.id}`);
       if (bar) bar.style.width = pct + '%';
       if (pctEl) pctEl.textContent = pct + '%';
     });
