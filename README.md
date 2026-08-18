@@ -1,190 +1,65 @@
-# 🐾 GEO Pet Care — Sistema Completo
+<h1 align="center">
+  🐾 Geo Pet Care - Plataforma de Gestão para ONGs
+</h1>
 
-Sistema de Match e Gestão para ONG de adoção de animais.
-Desenvolvido com base no Documento de Requisitos (Março 2026 — UnG).
-
----
-
-## 📁 Estrutura do Projeto
-
-```
-geopetcare/
-├── frontend/
-│   ├── geo_pet_care.html      ← Site público (adotantes, doadores)
-│   └── geo_admin.html         ← Painel back-office (admin/vet)
-│
-├── src/                       ← API Node.js + Express
-│   ├── server.js              ← Ponto de entrada
-│   ├── routes/index.js        ← Todas as rotas
-│   ├── controllers/
-│   │   ├── authController.js       ← Login, registro, JWT
-│   │   ├── animalController.js     ← CRUD animais + triagem
-│   │   ├── voluntarioController.js ← Cadastro e validação
-│   │   └── doacaoController.js     ← Doações + dashboard
-│   ├── services/
-│   │   └── matchService.js         ← Algoritmo de IA (RF07)
-│   ├── middlewares/
-│   │   └── auth.js                 ← autenticar + autorizar
-│   └── config/
-│       └── database.js             ← Pool MySQL
-│
-├── sql/
-│   └── schema.sql             ← Banco de dados completo
-│
-├── .env.example               ← Variáveis de ambiente
-├── package.json
-└── README.md
-```
+<p align="center">
+  <a href="#-sobre-o-projeto">Sobre</a> •
+  <a href="#-funcionalidades">Funcionalidades</a> •
+  <a href="#-tecnologias">Tecnologias</a> •
+  <a href="#-arquitetura-e-segurança">Arquitetura e Segurança</a> •
+  <a href="#-como-executar">Como Executar</a>
+</p>
 
 ---
 
-## 🚀 Como Rodar
+## 💻 Sobre o Projeto
 
-### 1. Pré-requisitos
-- Node.js 18+
-- MySQL 8+
+O **Geo Pet Care** é um sistema ponta a ponta desenvolvido para modernizar e digitalizar a gestão de Organizações Não Governamentais (ONGs) de proteção animal. 
 
-### 2. Banco de dados
-```sql
--- No MySQL Workbench ou terminal mysql:
-source /caminho/para/geopetcare/sql/schema.sql
-```
+O projeto centraliza operações críticas como o cadastro e triagem de animais resgatados, gerenciamento de voluntários, controle de doações e, o seu principal diferencial: um motor de "Match" que conecta de forma inteligente o perfil de adotantes aos pets disponíveis, otimizando e acelerando o processo de adoção responsável.
 
-### 3. Variáveis de ambiente
-```bash
-cp .env.example .env
-# Edite .env com suas credenciais MySQL
-```
+## ✨ Funcionalidades
 
-### 4. Instalar dependências e iniciar
-```bash
-npm install
-npm run dev     # desenvolvimento (nodemon)
-npm start       # produção
-```
+O sistema é dividido em uma API Restful robusta e um Dashboard Administrativo, contemplando:
 
-### 5. Frontend
-Abra os arquivos HTML diretamente no navegador:
-- `frontend/geo_pet_care.html` → site público
-- `frontend/geo_admin.html`   → painel administrativo
+- **🔑 Autenticação e Autorização:** Login seguro para administradores e voluntários com controle de sessão.
+- **🐶 Gestão de Pets (CRUD):** Cadastro completo de animais, incluindo histórico de saúde, triagem e status atual.
+- **🤝 Motor de Match (Match Service):** Lógica inteligente que cruza dados de formulários de adotantes com as características dos animais disponíveis.
+- **👥 Gestão de Pessoas:** Módulos dedicados para controle de **Adotantes** e **Voluntários**.
+- **📊 Transparência e Doações:** Painel e rotas específicas para registro e acompanhamento de recursos arrecadados.
 
----
+## 🚀 Tecnologias
 
-## 🔗 Endpoints da API
+Este projeto foi construído utilizando as seguintes tecnologias:
 
-Base URL: `http://localhost:3000/api/v1`
+**Backend (API Rest):**
+- [Node.js](https://nodejs.org/) & [Express.js](https://expressjs.com/)
+- Banco de Dados Relacional estruturado via SQL (`mysql2`)
+- Proteção de rotas e tokens com `jsonwebtoken`
+- Validação de dados com `express-validator`
 
-### Autenticação
-| Método | Rota            | Acesso  | Descrição              |
-|--------|-----------------|---------|------------------------|
-| POST   | /auth/registro  | Público | Cria conta             |
-| POST   | /auth/login     | Público | Login → retorna JWT    |
-| GET    | /auth/me        | 🔒 Auth | Dados do usuário logado|
+**Frontend (Dashboard):**
+- HTML5, CSS3 & JavaScript (Vanilla)
+- Consumo assíncrono da API Rest
 
-### Animais (RF01)
-| Método | Rota                        | Acesso         | Descrição                    |
-|--------|-----------------------------|----------------|------------------------------|
-| GET    | /animais/catalogo           | Público        | Catálogo com RN01 aplicado   |
-| GET    | /animais/:id                | Público        | Detalhes de um animal        |
-| GET    | /animais                    | 🔒 Admin/Vet   | Lista completa (back-office) |
-| POST   | /animais                    | 🔒 Admin/Vet   | Cadastrar novo resgate       |
-| PUT    | /animais/:id                | 🔒 Admin/Vet   | Atualizar animal             |
-| DELETE | /animais/:id                | 🔒 Admin       | Remover animal               |
-| GET    | /animais/microchip/:codigo  | 🔒 Admin/Vet   | Autopreenchimento por chip   |
+## 🛡️ Arquitetura e Segurança
 
-### Match por IA (RF06 + RF07)
-| Método | Rota   | Acesso              | Descrição                         |
-|--------|--------|---------------------|-----------------------------------|
-| POST   | /match | Público (token opt) | Executa algoritmo, retorna matches|
+A estrutura do projeto foi desenhada visando escalabilidade, separação de responsabilidades (MVC) e boas práticas de cibersegurança:
 
-### Voluntários (RF02)
-| Método | Rota                       | Acesso    | Descrição              |
-|--------|----------------------------|-----------|------------------------|
-| POST   | /voluntarios               | 🔒 Auth   | Cadastrar voluntário   |
-| GET    | /voluntarios               | 🔒 Admin  | Listar voluntários     |
-| PUT    | /voluntarios/:id/validar   | 🔒 Admin  | Aprovar/reprovar (UC02)|
+- **Padrão MVC e Services:** Lógicas complexas, como o algoritmo de compatibilidade de adoção, estão isoladas na camada de serviço (`src/services/matchService.js`), separadas dos controladores (`src/controllers/`).
+- **Middlewares de Segurança:** Acesso a rotas críticas da API protegido por validação de token JWT (`src/middlewares/auth.js`).
+- **Proteção de Credenciais:** As chaves de acesso e conexões com o banco de dados são gerenciadas dinamicamente via variáveis de ambiente (`.env`), garantindo que dados sensíveis não sejam versionados publicamente.
 
-### Doações (RF05 + RF04)
-| Método | Rota                      | Acesso   | Descrição                    |
-|--------|---------------------------|----------|------------------------------|
-| GET    | /doacoes/dashboard        | Público  | Portal da transparência (RF04)|
-| POST   | /doacoes                  | Público  | Criar doação (Pix/Cartão/Boleto)|
-| POST   | /doacoes/:id/confirmar    | 🔒 Admin | Confirmar pagamento (webhook) |
-| POST   | /doacoes/:id/pix-fallback | Público  | Fallback Pix se cartão falhar|
+## 🛠️ Como Executar (Ambiente Local)
 
----
+### Pré-requisitos
+- Node.js
+- Servidor MySQL rodando localmente
 
-## 🧪 Exemplos de uso (curl)
+### Passo a Passo
 
-### Login
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@geopetcare.org","senha":"password"}'
-```
-
-### Cadastrar animal (RF01)
-```bash
-curl -X POST http://localhost:3000/api/v1/animais \
-  -H "Authorization: Bearer SEU_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "Thor",
-    "especie": "cachorro",
-    "raca": "Labrador",
-    "porte": "grande",
-    "classificacao_risco": "baixo",
-    "nivel_energia": "alto",
-    "data_resgate": "2026-03-01",
-    "castrado": true,
-    "vacinado": true
-  }'
-```
-
-### Rodar o quiz de match (RF06 + RF07)
-```bash
-curl -X POST http://localhost:3000/api/v1/match \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tipo_moradia": "casa_com_quintal",
-    "possui_criancas": false,
-    "possui_outros_animais": false,
-    "tempo_livre_diario_h": 6,
-    "experiencia_previa": "intermediario",
-    "preferencia_especie": "cachorro",
-    "preferencia_porte": "grande",
-    "preferencia_energia": "alto"
-  }'
-```
-
-### Fazer doação via Pix
-```bash
-curl -X POST http://localhost:3000/api/v1/doacoes \
-  -H "Content-Type: application/json" \
-  -d '{"valor": 50.00, "metodo": "pix", "recorrente": false}'
-```
-
----
-
-## 📋 Regras de Negócio Implementadas
-
-| Regra | Descrição                                                      | Onde          |
-|-------|----------------------------------------------------------------|---------------|
-| RN01  | Animais críticos/graves bloqueados do catálogo público         | VIEW MySQL + animalController |
-| RN02  | Alerta ao atingir 28+ animais na sede (limite: 30)             | animalController.criar        |
-| RF03  | Tag "Cachorro Invisível" automática para animais com ≥90 dias  | VIEW MySQL                    |
-| UC03  | Sem matches abaixo de 30% → mensagem + sugestão de e-mail      | matchService                  |
-| UC02  | CPF bloqueado permanentemente ao ser reprovado                 | voluntarioController          |
-| RNF05 | Dados de cartão nunca armazenados no banco                     | doacaoController              |
-
----
-
-## 🔐 Perfis de Usuário
-
-| Perfil       | Acesso                                              |
-|--------------|-----------------------------------------------------|
-| `admin`      | Tudo — incluindo validar voluntários e remover dados|
-| `veterinario`| Cadastrar e editar animais, ver triagem             |
-| `adotante`   | Quiz de match, ver catálogo                         |
-| `voluntario` | Cadastrar-se como lar temporário                    |
-| `doador`     | Realizar doações autenticadas                       |
+1. **Clone o repositório e instale as dependências:**
+   ```bash
+   git clone [https://github.com/seu-usuario/ong-geopetcare.git](https://github.com/seu-usuario/ong-geopetcare.git)
+   cd ong-geopetcare
+   npm install
